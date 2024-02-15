@@ -183,7 +183,8 @@ case "${COMMAND}" in
     # Enable reproducible builds for ccache
     export KBUILD_BUILD_TIMESTAMP=""
     # Generate not only the kernel but also the clangd config
-    CMD="${MAKE} ${SILENT_BUILD_FLAG} ARCH=${TARGET_ARCH} all compile_commands.json"
+    #CMD="${MAKE} ${SILENT_BUILD_FLAG} ARCH=${TARGET_ARCH} all compile_commands.json"
+    CMD="${MAKE} ARCH=${TARGET_ARCH} all compile_commands.json"
     echo ${CMD}
     eval ${CMD} &
     spinner $!
