@@ -6,6 +6,9 @@
 ## Cross-compile/debug/emulate for arm64
 # TARGET_ARCH=arm64
 
+## Cross-compile/debug/emulate for arm64
+TARGET_ARCH=riscv
+
 ## Change PATH to use a different QEMU binary
 # export PATH=$HOME/qemu/bin/:$PATH
 
