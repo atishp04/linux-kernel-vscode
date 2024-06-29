@@ -97,6 +97,14 @@ elif [ "${TARGET_ARCH}" = "arm64" ]; then
   : ${SERIAL_TTY:="ttyAMA0"}
   : ${PROOT_ARGS:="-q qemu-aarch64-static"}
   : ${SYZKALLER_TARGETARCH:="arm4"}
+elif [ "${TARGET_ARCH}" = "riscv" ]; then
+  : ${VMLINUX:="Image"}
+  : ${CLANG_TARGET:="riscv64-unknown-linux-gnu"}
+  : ${DEBIAN_TARGET_ARCH:="riscv"}
+  : ${TOOLS_SRCARCH:="riscv"}
+  : ${QEMU_CMD:="${QEMU_BIN} -cpu rv64 -machine virt,aia=aplic-imsic,aia-guests=4 "}
+  : ${SERIAL_TTY:="ttyS0"}
+  : ${KERNEL_CMDLINE_EXTRA:="earlycon=sbi"}
 else
   echo "Unsupported TARGET_ARCH:" $TARGET_ARCH
   exit 2
