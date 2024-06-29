@@ -6,8 +6,14 @@
 ## Cross-compile/debug/emulate for arm64
 # TARGET_ARCH=arm64
 
+## Cross-compile/debug/emulate for arm64
+TARGET_ARCH=riscv
+module load rivos-sdk/riscv-isa-sim
+module load rivos-sdk/riscv-gnu-toolchain
+
 ## Change PATH to use a different QEMU binary
 # export PATH=$HOME/qemu/bin/:$PATH
+QEMU_BIN="/scratch/workspace/upstream/qemu/build/qemu-system-riscv64"
 
 ## Generate objects in a subdirectory
 # MAKE="$MAKE O=.vscode/build-$TARGET_ARCH/"
@@ -23,7 +29,8 @@
 # fi
 
 ## Make the build verbose
-# SILENT_BUILD_FLAG=""
+SILENT_BUILD_FLAG=" "
+BIOS="/scratch/workspace/upstream/opensbi/build/platform/generic/firmware/fw_dynamic.elf"
 
 ## Disable the build spinner
 # SPINNER=0
