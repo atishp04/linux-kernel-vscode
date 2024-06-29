@@ -68,6 +68,7 @@ done
 : ${IMAGE_DIR:="${HOME}/.linux-kernel-vscode"}
 : ${IMAGE_PATH:="${IMAGE_DIR}/debian-${TARGET_ARCH}.img"}
 : ${TRACER_PATH:=".vscode/autostart/tracer.stp"}
+: ${BIOS_ARGS:=""}
 if [[ "$TERM_PROGRAM" == "vscode" ]]; then
   : ${CLEAR:=1}
 fi
@@ -82,7 +83,8 @@ if [ "${TARGET_ARCH}" = "x86_64" ]; then
   : ${DEBIAN_TARGET_ARCH:="amd64"}
   : ${TOOLS_SRCARCH:="x86"}
   : ${QEMU_BIN:="qemu-system-x86_64"}
-  : ${QEMU_CMD:="${QEMU_BIN} -enable-kvm -cpu host -machine q35 -bios qboot.rom"}
+  : ${BIOS:="qboot.rom"}
+  : ${QEMU_CMD:="${QEMU_BIN} -enable-kvm -cpu host -machine q35"}
   : ${SERIAL_TTY:="ttyS0"}
   : ${SYZKALLER_TARGETARCH:="amd64"}
 elif [ "${TARGET_ARCH}" = "arm64" ]; then
@@ -120,7 +122,7 @@ if [ ! -f ${SSH_KEY} ]; then
 fi
 
 # QEMU start command
-: ${VM_START:="${QEMU_CMD} -s -nographic -smp 4 -m 4G -qmp tcp:localhost:4444,server,nowait -serial mon:stdio \
+: ${VM_START:="${QEMU_CMD} -bios ${BIOS} -s -nographic -smp 4 -m 4G -qmp tcp:localhost:4444,server,nowait -serial mon:stdio \
     -net nic,model=virtio-net-pci -net user,hostfwd=tcp::5555-:22 \
     -virtfs local,path=/,mount_tag=hostfs,security_model=none,multidevs=remap \
     -append \"console=${SERIAL_TTY},115200 root=/dev/sda rw nokaslr init=/lib/systemd/systemd debug systemd.log_level=info ${KERNEL_CMDLINE_EXTRA}\" \
