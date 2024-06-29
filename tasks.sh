@@ -192,8 +192,8 @@ case "${COMMAND}" in
     ;;
   "gdb-index")
     # Hitting a breakpoint is *much* faster if we pre-build a gdb symbol index
-    if ! readelf -S vmlinux | grep -q ".gdb_index"; then
-      GDB=gdb-multiarch gdb-add-index vmlinux
+    if ! ${CLANG_TARGET}-readelf -S vmlinux | grep -q ".gdb_index"; then
+      GDB=gdb-multiarch OBJDUMP=${CLANG_TARGET}-objdump OBJCOPY=${CLANG_TARGET}-objcopy ${CLANG_TARGET}-gdb-add-index vmlinux
     fi
     ;;
 # Rootfs management
