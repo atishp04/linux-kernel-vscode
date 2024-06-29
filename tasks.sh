@@ -102,9 +102,10 @@ elif [ "${TARGET_ARCH}" = "riscv" ]; then
   : ${CLANG_TARGET:="riscv64-unknown-linux-gnu"}
   : ${DEBIAN_TARGET_ARCH:="riscv"}
   : ${TOOLS_SRCARCH:="riscv"}
-  : ${QEMU_CMD:="${QEMU_BIN} -cpu rv64 -machine virt,aia=aplic-imsic,aia-guests=4 "}
+  : ${QEMU_CMD:="${QEMU_BIN} -cpu max -machine ${MACHINE_ARGS}"}
+#  : ${QEMU_CMD:="${QEMU_BIN} -cpu rv64$ISA_EXT -machine ${MACHINE_ARGS}"}
   : ${SERIAL_TTY:="ttyS0"}
-  : ${KERNEL_CMDLINE_EXTRA:="earlycon=sbi"}
+  : ${KERNEL_CMDLINE_EXTRA:="earlycon=sbi,acpi.debug_layer=0xffffffff acpi.debug_level=0xffffffff"}
 else
   echo "Unsupported TARGET_ARCH:" $TARGET_ARCH
   exit 2
@@ -130,20 +131,25 @@ if [ ! -f ${SSH_KEY} ]; then
 fi
 
 # QEMU start command
-: ${VM_START:="${QEMU_CMD} -bios ${BIOS} -s -nographic -smp 4 -m 4G -qmp tcp:localhost:4444,server,nowait -serial mon:stdio \
-    -net nic,model=virtio-net-pci -net user,hostfwd=tcp::5555-:22 \
+: ${VM_START:="${QEMU_CMD} -s -nographic -smp 8 -m 4G -qmp tcp:localhost:4444,server,nowait -serial mon:stdio \
+    -device virtio-net-device,netdev=usernet -netdev user,id=usernet,hostfwd=tcp::5555-:22 \
+    -fsdev local,id=host,path=${SHARED_HOST_DIR},security_model=none -device virtio-9p-pci,fsdev=host,mount_tag=/dev/shm \
     -virtfs local,path=/,mount_tag=hostfs,security_model=none,multidevs=remap \
-    -append \"console=${SERIAL_TTY},115200 root=/dev/sda rw nokaslr init=/lib/systemd/systemd debug systemd.log_level=info ${KERNEL_CMDLINE_EXTRA}\" \
-    -drive file=${IMAGE_PATH},format=raw -kernel ${KERNEL_PATH} ${VM_START_ARGS}"}
+    -append \"console=${SERIAL_TTY},115200 ${ROOT_ARGS} debug systemd.log_level=info ${KERNEL_CMDLINE_EXTRA}\" \
+    -drive file=${IMAGE_PATH},format=raw,if=none,id=hd0 -device virtio-blk-pci,drive=hd0 -kernel ${KERNEL_PATH} ${VM_START_ARGS}"} \
+
+#-drive file=${IMAGE_PATH},format=raw,if=none,id=hd0 -device virtio-blk-pci,drive=hd0 ${VM_START_ARGS}"}
 
 case "${COMMAND}" in
 # Virtual machine life-cycle
   "start")
-    depend_on install-autostart
+    #depend_on install-autostart
+    echo ${VM_START}
     eval ${VM_START}
     ;;
   "start-wait-dbg")
-    depend_on install-autostart
+    #depend_on install-autostart
+    echo ${VM_START}
     eval ${VM_START} -S
     ;;
   "stop")
@@ -194,14 +200,18 @@ case "${COMMAND}" in
     spinner $!
 
     # A gdb index may need to be re-generated. Don't clear the above make logs.
-    CLEAR=0 $SCRIPT gdb-index
+    # gdb-index doesn't work correctly on RISC-V yet.
+    if [ "${TARGET_ARCH}" != "riscv" ]; then
+      CLEAR=0 $SCRIPT gdb-index
+    fi
     # A tracer module may need to be re-built
     CLEAR=0 $SCRIPT systemtap-build
     ;;
   "gdb-index")
-    # Hitting a breakpoint is *much* faster if we pre-build a gdb symbol index
+     Hitting a breakpoint is *much* faster if we pre-build a gdb symbol index
     if ! ${CLANG_TARGET}-readelf -S vmlinux | grep -q ".gdb_index"; then
       GDB=gdb-multiarch OBJDUMP=${CLANG_TARGET}-objdump OBJCOPY=${CLANG_TARGET}-objcopy ${CLANG_TARGET}-gdb-add-index vmlinux
+      echo ${GDB}
     fi
     ;;
 # Rootfs management
